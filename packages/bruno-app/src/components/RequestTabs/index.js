@@ -20,10 +20,11 @@ const RequestTabs = () => {
   const leftSidebarWidth = useSelector((state) => state.app.leftSidebarWidth);
   const screenWidth = useSelector((state) => state.app.screenWidth);
 
-  const getTabClassname = (tab, index) => {
+  const getTabClassname = (tab, index, dragId) => {
     return classnames('request-tab select-none', {
       active: tab.uid === activeTabUid,
-      'last-tab': tabs && tabs.length && index === tabs.length - 1
+      'last-tab': tabs && tabs.length && index === tabs.length - 1,
+      ['opacity-50']: dragId === tab.uid
     });
   };
 
@@ -103,18 +104,21 @@ const RequestTabs = () => {
             </ul>
             <ul role="tablist" style={{ maxWidth: maxTablistWidth }} ref={tabsRef}>
               {collectionRequestTabs && collectionRequestTabs.length
-                ? collectionRequestTabs.map((tab, index) => {
-                    return (
-                      <li
-                        key={tab.uid}
-                        className={getTabClassname(tab, index)}
-                        role="tab"
-                        onClick={() => handleClick(tab)}
-                      >
-                        <RequestTab key={tab.uid} tab={tab} collection={activeCollection} />
-                      </li>
-                    );
-                  })
+                ? collectionRequestTabs
+                    .sort((a, b) => a.order - b.order)
+                    .map((tab, index) => {
+                      return (
+                        <li
+                          key={tab.uid}
+                          className={getTabClassname(tab, index, '123')}
+                          role="tab"
+                          onClick={() => handleClick(tab)}
+                          // ref={drop}
+                        >
+                          <RequestTab key={tab.uid} tab={tab} collection={activeCollection} />
+                        </li>
+                      );
+                    })
                 : null}
             </ul>
 

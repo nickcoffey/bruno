@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import get from 'lodash/get';
-import { closeTabs } from 'providers/ReduxStore/slices/tabs';
+import { useDrag, useDrop } from 'react-dnd';
+import { closeTabs, reorderTabs } from 'providers/ReduxStore/slices/tabs';
 import { saveRequest } from 'providers/ReduxStore/slices/collections/actions';
 import { deleteRequestDraft } from 'providers/ReduxStore/slices/collections';
 import { useTheme } from 'providers/Theme';
@@ -81,6 +82,34 @@ const RequestTab = ({ tab, collection }) => {
     return color;
   };
 
+  const [{ isDragging }, drag] = useDrag({
+    type: `TAB_ITEM`,
+    item: tab,
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging()
+    })
+  });
+
+  const [{ isOver }, drop] = useDrop({
+    accept: `TAB_ITEM`,
+    drop: (draggedItem) => {
+      if (draggedItem.uid !== tab.uid) {
+        dispatch(
+          reorderTabs({
+            draggedItem,
+            tab
+          })
+        );
+      }
+    },
+    canDrop: (draggedItem) => {
+      return draggedItem.uid !== tab.uid;
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver()
+    })
+  });
+
   if (['collection-settings', 'variables', 'collection-runner'].includes(tab.type)) {
     return (
       <StyledWrapper className="flex items-center justify-between tab-container px-1">
@@ -102,7 +131,7 @@ const RequestTab = ({ tab, collection }) => {
   const method = item.draft ? get(item, 'draft.request.method') : get(item, 'request.method');
 
   return (
-    <StyledWrapper className="flex items-center justify-between tab-container px-1">
+    <StyledWrapper className="flex items-center justify-between tab-container px-1" ref={(node) => drag(drop(node))}>
       {showConfirmClose && (
         <ConfirmRequestClose
           item={item}

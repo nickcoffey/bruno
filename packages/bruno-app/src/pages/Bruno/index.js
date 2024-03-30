@@ -1,5 +1,7 @@
 import React from 'react';
 import classnames from 'classnames';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import Welcome from 'components/Welcome';
 import RequestTabs from 'components/RequestTabs';
 import RequestTabPanel from 'components/RequestTabPanel';
@@ -65,7 +67,9 @@ export default function Main() {
             <Welcome />
           ) : (
             <>
-              <RequestTabs />
+              <DndProvider backend={HTML5Backend}>
+                <RequestTabs />
+              </DndProvider>
               <RequestTabPanel key={activeTabUid} />
             </>
           )}

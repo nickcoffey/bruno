@@ -33,6 +33,7 @@ export const tabsSlice = createSlice({
       }
 
       state.tabs.push({
+        order: state.tabs.length + 1,
         uid: action.payload.uid,
         collectionUid: action.payload.collectionUid,
         requestPaneWidth: null,
@@ -44,6 +45,24 @@ export const tabsSlice = createSlice({
     },
     focusTab: (state, action) => {
       state.activeTabUid = action.payload.uid;
+    },
+    reorderTabs: (state, action) => {
+      console.log({ tabs: state.tabs.map((t) => ({ ...t })) });
+      // IF draggedItem is bigger than tab order THEN reduce tabs less than draggedItem order by 1
+      state.tabs = state.tabs.map((t) => {
+        // console.log({ ...action.payload, tOrder: t.order });
+        // give dragged tab order of item it's dropped over
+        if (t.uid === action.payload.draggedItem.uid) {
+          return { ...t, order: action.payload.tab.order };
+        }
+        if (action.payload.draggedItem.order > t.order && t.order >= action.payload.tab.order) {
+          return { ...t, order: t.order + 1 };
+        }
+        if (action.payload.draggedItem.order < t.order && t.order <= action.payload.tab.order) {
+          return { ...t, order: t.order - 1 };
+        }
+        return t;
+      });
     },
     updateRequestPaneTabWidth: (state, action) => {
       const tab = find(state.tabs, (t) => t.uid === action.payload.uid);
@@ -69,9 +88,12 @@ export const tabsSlice = createSlice({
     closeTabs: (state, action) => {
       const activeTab = find(state.tabs, (t) => t.uid === state.activeTabUid);
       const tabUids = action.payload.tabUids || [];
+      const maxDeletedOrder = Math.max(...filter(state.tabs, (t) => tabUids.includes(t.uid)).map((t) => t.order));
 
       // remove the tabs from the state
-      state.tabs = filter(state.tabs, (t) => !tabUids.includes(t.uid));
+      state.tabs = filter(state.tabs, (t) => !tabUids.includes(t.uid)).map((t) =>
+        t.order > maxDeletedOrder ? { ...t, order: t.order - 1 } : t
+      );
 
       if (activeTab && state.tabs.length) {
         const { collectionUid } = activeTab;
@@ -111,6 +133,7 @@ export const {
   updateRequestPaneTabWidth,
   updateRequestPaneTab,
   updateResponsePaneTab,
+  reorderTabs,
   closeTabs,
   closeAllCollectionTabs
 } = tabsSlice.actions;
